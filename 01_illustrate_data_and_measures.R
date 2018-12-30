@@ -1,8 +1,7 @@
 rm(list = ls())
 
-# source("src/R/helper.R")
-source("src/R/helper_string.R")
-source("src/R/theme_publication.R")
+source("R/helper_string.R")
+source("R/theme_publication.R")
 
 library(tidyverse)
 library(foreign)
@@ -25,13 +24,6 @@ plot(pdm.early.inc)
 pdm.early.dec <- as.data.frame(pdm.early.inc)
 pdm.early.dec$counts[1:9] <- NA
 
-pdm.death <- pdm %>% 
-  dplyr::filter(death == 1)
-pdm.death.inc <- incidence(pdm.death$diagnose, first_date = as.Date("2009-05-01"), 
-                           last_date = as.Date("2010-04-30"))
-pdm.death.dec <- as.data.frame(pdm.death.inc)
-pdm.death.dec$counts[1:9] <- NA
-
 p1 <- ggplot(pdm.dec, aes(dates, counts)) + 
   geom_line() + 
   scale_x_date(expand = c(0, 0), 
@@ -44,20 +36,7 @@ p1 <- ggplot(pdm.dec, aes(dates, counts)) +
         panel.grid.major = element_blank())
 print(p1)
 
-p2 <- ggplot(pdm.death.dec, aes(dates, counts)) + 
-  geom_line() + 
-  scale_x_date(expand = c(0, 0), 
-               limits = c(as.Date("2009-05-01"), as.Date("2010-05-01")), 
-               breaks = "1 month", date_labels = "%Y-%b") + 
-  scale_y_continuous(breaks = seq(0, 30, by = 5)) + 
-  labs(x = "", y = "Number of deaths") + 
-  theme_publication(base_size = 12) + 
-  theme(axis.text.x = element_text(angle = 30, hjust = 1), 
-        plot.margin = unit(c(0, 0.5, 0, 0.5), "cm"), 
-        panel.grid.major = element_blank())
-print(p2)
-
-p3 <- ggplot(pdm.early.dec, aes(dates, counts)) + 
+p2 <- ggplot(pdm.early.dec, aes(dates, counts)) + 
   geom_line() + 
   scale_x_date(expand = c(0, 0), 
                limits = c(as.Date("2009-05-01"), as.Date("2009-09-05")), 
@@ -71,30 +50,14 @@ print(p3)
 
 p <- cowplot::plot_grid(p1, p2, nrow = 2, align = "v")
 
-outfile <- "figs/confirmed/pdm/epidemic_curve.pdf"
-pdf(file = outfile, width = 6, height = 6)
-print(p)
-dev.off()
-
-p13 <- cowplot::ggdraw() + 
-  cowplot::draw_plot(p1) + 
-  cowplot::draw_plot(p3, x = 0.08, y = 0.6, width = 0.35, height = 0.35)
-
-outfile <- "figs/confirmed/pdm/epidemic_curve_embed.pdf"
-pdf(file = outfile, width = 10, height = 6)
-print(p13)
-dev.off()
-
-p <- cowplot::plot_grid(p1, p3, nrow = 2, align = "v")
-
-outfile <- "figs/confirmed/pdm/epidemic_curve1.pdf"
+outfile <- "figs/epidemic_curve.pdf"
 pdf(file = outfile, width = 6, height = 6)
 print(p)
 dev.off()
 
 # illustration of arrival days and peak days using the epidemic curve of Beijing
 pdm.beijing <- pdm %>% 
-  dplyr::filter(GBPref1 == "1100")
+  dplyr::filter(GBPref == "1100")
 pdm.beijing.inc <- incidence(pdm.beijing$diagnose, first_date = as.Date("2009-05-01"), 
                              last_date = as.Date("2010-04-30"))
 pdm.beijing.dec <- as.data.frame(pdm.beijing.inc)
@@ -140,7 +103,7 @@ p <- ggplot(pdm.beijing.dec, aes(dates, counts)) +
         panel.grid.major = element_blank())
 print(p)
 
-outfile <- "figs/confirmed/pdm/arrival_peak_day_illustration.pdf"
+outfile <- "figs/arrival_peak_day_illustration.pdf"
 pdf(file = outfile, width = 8, height = 6)
 print(p)
 dev.off()

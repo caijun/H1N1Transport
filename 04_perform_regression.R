@@ -1,30 +1,17 @@
 rm(list = ls())
 
-source("src/R/helper_string.R")
-source("src/R/theme_publication.R")
+source("R/helper_string.R")
+source("R/theme_publication.R")
 
 load("output/115_prefectures_for_regression.rda")
 
 # 115 prefectures with passenger volumes by air + train + road -----------------
-
 Fn <- ecdf(arrival.dat5$idx_arr)
 plot(Fn)
 Fn(4)
 Fn(38)
 Fn(80)
 Fn(125)
-
-arrival.dat5 <- arrival.dat5 %>% 
-  dplyr::mutate(ecdf_idx_arr = Fn(idx_arr), 
-                q_idx_arr = cut(ecdf_idx_arr, breaks = seq(0, 1, by = 0.25), 
-                                       include.lowest = TRUE, right = FALSE)
-  )
-
-# output for visualizing on map
-library(xlsx)
-outfile <- path.expand(strwrap("output/transport/
-                               115_prefectures_air_train_road_passenger_volumes.xlsx"))
-write.xlsx(arrival.dat5, file = outfile, row.names = FALSE)
 
 # OLS regression ---------------------------------------------------------------
 # R^2 = 0.6019
@@ -100,17 +87,10 @@ print(p1)
 qs <- 1:3/4
 qr2 <- rq(idx_arr ~ lat + lng + log(PAviation) + log(PRailway) + log(PRoad), 
           data = arrival.dat5, tau = qs)
-# https://stackoverflow.com/questions/16464391/what-is-the-confidence-interval-for-quantile-regression-and-how-to-find-other-t
 # default alpha level is 0.1
-summary(qr2)
-summary(qr2, alpha = 0.1)
 # set alpha level to 0.05, 95% confidence interval
 summary(qr2, alpha = 0.05)
 coef(qr2)
-# p-value provided by specifying the nid or boot method to compute se.
-summary(qr2, se = "iid") # 给出p-value，同时符合预期
-summary(qr2, se = "boot")
-summary(qr2, se = "nid")
 
 # pseudo R squared
 # https://stackoverflow.com/questions/19861194/extract-r2-from-quantile-regression-summary
@@ -122,11 +102,11 @@ fit1 <- rq(idx_arr ~ lat + lng + log(PAviation) + log(PRailway) + log(PRoad),
 rho <- function(u, tau = .5) {
   u * (tau - (u < 0))
 }
+
 V0 <- sum(rho(fit0$resid, fit0$tau))
 V1 <- sum(rho(fit1$resid, fit1$tau))
 (R1 <- 1 - V1/V0)
 (R1 <- 1 - fit1$rho/fit0$rho)
-
 
 # quantile process regression plots
 qs <- 1:19/20
@@ -219,26 +199,7 @@ print(p4)
 p <- cowplot::plot_grid(p1, p2, p3, p4, nrow = 2, align = "v",
                         labels = c('(a)', '(b)', '(c)', '(d)'))
 
-outfile <- "figs/confirmed/pdm/arrival_peak_day_quantile_regression_plot.pdf"
+outfile <- "figs/arrival_peak_day_quantile_regression_plot.pdf"
 pdf(file = outfile, width = 10, height = 8)
 print(p)
 dev.off()
-
-plot(summary(qr3), parm = "lat")
-plot(summary(qr3), parm = "lng")
-plot(summary(qr3), parm = "log(PAviation)")
-plot(summary(qr3), parm = "log(PRailway)")
-plot(summary(qr3, se = "iid"), parm = "log(PRailway)", level = 0.95) # default level is 0.9
-plot(summary(qr3), parm = "log(PRoad)")
-
-ggplot(arrival.dat5, aes(log(PAviation), idx_arr)) + 
-  geom_point() + 
-  geom_quantile(quantiles = qs)
-
-ggplot(arrival.dat5, aes(log(PRailway), idx_arr)) + 
-  geom_point() + 
-  geom_quantile(quantiles = qs)
-
-ggplot(arrival.dat5, aes(log(PRoad), idx_arr)) + 
-  geom_point() + 
-  geom_quantile(quantiles = qs)
