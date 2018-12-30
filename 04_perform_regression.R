@@ -1,6 +1,5 @@
 rm(list = ls())
 
-source("R/helper_string.R")
 source("R/theme_publication.R")
 
 load("output/115_prefectures_for_regression.rda")

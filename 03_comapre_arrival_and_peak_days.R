@@ -1,12 +1,11 @@
 rm(list = ls())
 
-source("R/helper_string.R")
 source("R/theme_publication.R")
 
 library(foreign)
 # final data for analysis
 # 尽可能补充地级市交通运输客运量后的数据集
-infile <- strwrap("data/confirmed_pdm_pref_arrival_peak_day_airport_railway_station_update_pv.dbf")
+infile <- "data/confirmed_pdm_pref_arrival_peak_day_airport_railway_station_update_pv.dbf"
 dat <- read.dbf(infile, as.is = TRUE)
 
 library(tidyverse)

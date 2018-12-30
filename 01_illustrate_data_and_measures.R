@@ -1,16 +1,10 @@
 rm(list = ls())
 
-source("R/helper_string.R")
 source("R/theme_publication.R")
 
 library(tidyverse)
 library(foreign)
 pdm <- read.dbf('data/confirmed_pdm.dbf', as.is = TRUE)
-
-pdm1 <- pdm %>% 
-  select(card, Lon, Lat, GBProv, ProvName, GBPref, PrefName, FullPref, GBCounty, 
-         County, type = type1, diagnose)
-write.dbf(pdm1, file = 'output/confirmed_pdm1.dbf')
 
 # Fang.etal-Am.J.Epidemiol.-2012 drew epidemic curve based on onset date.
 # We draw epidemic curve based on diagnosis date
