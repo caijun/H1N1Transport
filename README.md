@@ -1,2 +1,2 @@
 # H1N1Transport
-Roles of Different Transport Modes in the Spatial Spread of the 2009  Influenza A(H1N1) Pandemic in Mainland China
+Data and analysis code for Cai, J., Xu, B., Chan, K., Zhang, X., Zhang, B., Chen, Z., & Xu, B. (2019). Roles of Different Transport Modes in the Spatial Spread of the 2009  Influenza A(H1N1) Pandemic in Mainland China. *International Journal of Environmental Research and Public Health*.
