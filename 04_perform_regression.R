@@ -7,26 +7,11 @@ load("output/115_prefs_for_qr.rda")
 # 115 prefectures with passenger volumes by air + train + road -----------------
 Fn <- ecdf(arrival.dat5$idx_arr)
 plot(Fn)
-Fn(4)
 Fn(38)
-Fn(80)
+Fn(81)
 Fn(125)
 
-# OLS regression ---------------------------------------------------------------
-# R^2 = 0.6019
-m <- lm(idx_arr ~ lat + lng + log(PAviation) + log(PRailway) + log(PRoad), 
-        data = arrival.dat5)
-summary(m)
-confint(m)
-# plot(m)
-library(car)
-vif(m)
-# extract coefficients for OLS
-olscf <- summary(m)$coefficients
-olscf <- cbind(olscf[, 1], confint(m))
-colnames(olscf) <- c("coefficients", "lower.bd", "upper.bd")
-
-# quantile regression
+# quantile regression ----------------------------------------------------------
 library(quantreg)
 qr1 <- rq(idx_arr ~ lat + lng + log(PAviation) + log(PRailway) + log(PRoad), 
           data = arrival.dat5, tau = 0.5)
@@ -127,11 +112,6 @@ p2 <- ggplot(df, aes(taus, coefficients)) +
   geom_ribbon(aes(ymin = lower.bd, ymax = upper.bd), fill = "#dce7f2") + 
   geom_line(color = "#2752a4") + 
   geom_hline(yintercept = 0, color = "gray") + 
-  geom_hline(yintercept = olscf[parm, "coefficients"], color = mypal[8]) + 
-  geom_hline(yintercept = olscf[parm, "lower.bd"], color = mypal[8], 
-             linetype = "dashed") + 
-  geom_hline(yintercept = olscf[parm, "upper.bd"], color = mypal[8], 
-             linetype = "dashed") + 
   scale_x_continuous(expand = c(0, 0), limits = c(0, 1), 
                      breaks = seq(0, 1, by = 0.1)) + 
   scale_y_continuous(expand = c(0, 0), limits = c(-25, 10), 
@@ -153,11 +133,6 @@ p3 <- ggplot(df, aes(taus, coefficients)) +
   geom_ribbon(aes(ymin = lower.bd, ymax = upper.bd), fill = "#dce7f2") + 
   geom_line(color = "#2752a4") + 
   geom_hline(yintercept = 0, color = "gray") + 
-  geom_hline(yintercept = olscf[parm, "coefficients"], color = mypal[8]) + 
-  geom_hline(yintercept = olscf[parm, "lower.bd"], color = mypal[8], 
-             linetype = "dashed") + 
-  geom_hline(yintercept = olscf[parm, "upper.bd"], color = mypal[8], 
-             linetype = "dashed") + 
   scale_x_continuous(expand = c(0, 0), limits = c(0, 1), 
                      breaks = seq(0, 1, by = 0.1)) + 
   scale_y_continuous(expand = c(0, 0), limits = c(-25, 10), 
@@ -179,11 +154,6 @@ p4 <- ggplot(df, aes(taus, coefficients)) +
   geom_ribbon(aes(ymin = lower.bd, ymax = upper.bd), fill = "#dce7f2") + 
   geom_line(color = "#2752a4") + 
   geom_hline(yintercept = 0, color = "gray") + 
-  geom_hline(yintercept = olscf[parm, "coefficients"], color = mypal[8]) + 
-  geom_hline(yintercept = olscf[parm, "lower.bd"], color = mypal[8], 
-             linetype = "dashed") + 
-  geom_hline(yintercept = olscf[parm, "upper.bd"], color = mypal[8], 
-             linetype = "dashed") + 
   scale_x_continuous(expand = c(0, 0), limits = c(0, 1), 
                      breaks = seq(0, 1, by = 0.1)) + 
   scale_y_continuous(expand = c(0, 0), limits = c(-25, 10), 
