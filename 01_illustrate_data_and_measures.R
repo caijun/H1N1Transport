@@ -5,7 +5,12 @@ source("R/theme_publication.R")
 
 library(tidyverse)
 library(foreign)
-pdm <- read.dbf('output/confirmed_pdm.dbf', as.is = TRUE)
+pdm <- read.dbf('data/confirmed_pdm.dbf', as.is = TRUE)
+
+pdm1 <- pdm %>% 
+  select(card, Lon, Lat, GBProv, ProvName, GBPref, PrefName, FullPref, GBCounty, 
+         County, type = type1, diagnose)
+write.dbf(pdm1, file = 'output/confirmed_pdm1.dbf')
 
 # Fang.etal-Am.J.Epidemiol.-2012 drew epidemic curve based on onset date.
 # We draw epidemic curve based on diagnosis date
@@ -46,7 +51,7 @@ p2 <- ggplot(pdm.early.dec, aes(dates, counts)) +
   theme(axis.text.x = element_text(angle = 30, hjust = 1), 
         plot.margin = unit(c(0.5, 0.5, 0, 0.5), "cm"), 
         panel.grid.major = element_blank())
-print(p3)
+print(p2)
 
 p <- cowplot::plot_grid(p1, p2, nrow = 2, align = "v")
 

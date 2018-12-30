@@ -1,7 +1,6 @@
 rm(list = ls())
 
 source("R/helper_string.R")
-source("R/helper_statistic.R")
 source("R/theme_publication.R")
 
 library(foreign)

@@ -1,7 +1,14 @@
 rm(list = ls())
 
-load("output/confirmed_pdm_pref.rda")
-# daily epidemic curve for each prefecture
+source("R/helper.R")
+
+library(tidyverse)
+library(foreign)
+pdm <- read.dbf('data/confirmed_pdm.dbf', as.is = TRUE)
+# calculate daily epidemic curve, and estimate arrival and peak day 
+# for each prefecture
+pref.dec <- calc.dec.pref(pdm)
+
 # arrival day and peak day
 arr.pk <- pref.dec$arr.pk
 # now starting on 2009-05-01
@@ -14,6 +21,6 @@ arr.pk1 <- arr.pk %>%
 summary(arr.pk1$idx.arr)
 summary(arr.pk1$idx.pk)
 
-# output arrival and peak days for visualizing on map
+# output arrival and peak days for visualizing on map using ArcGIS
 outfile <- "output/confirmed_pdm_pref_arrival_peak_day.csv"
 write.csv(arr.pk1, file = outfile, row.names = F, quote = F)
