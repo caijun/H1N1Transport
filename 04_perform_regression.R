@@ -2,7 +2,7 @@ rm(list = ls())
 
 source("R/theme_publication.R")
 
-load("output/115_prefectures_for_regression.rda")
+load("output/115_prefs_for_qr.rda")
 
 # 115 prefectures with passenger volumes by air + train + road -----------------
 Fn <- ecdf(arrival.dat5$idx_arr)
@@ -198,7 +198,7 @@ print(p4)
 p <- cowplot::plot_grid(p1, p2, p3, p4, nrow = 2, align = "v",
                         labels = c('(a)', '(b)', '(c)', '(d)'))
 
-outfile <- "figs/arrival_peak_day_quantile_regression_plot.pdf"
+outfile <- "figs/arrival_peak_day_qr_plot.pdf"
 pdf(file = outfile, width = 10, height = 8)
 print(p)
 dev.off()

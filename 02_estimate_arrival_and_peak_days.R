@@ -22,5 +22,5 @@ summary(arr.pk1$idx.arr)
 summary(arr.pk1$idx.pk)
 
 # output arrival and peak days for visualizing on map using ArcGIS
-outfile <- "output/confirmed_pdm_pref_arrival_peak_day.csv"
+outfile <- "output/pref_arrival_peak_day.csv"
 write.csv(arr.pk1, file = outfile, row.names = F, quote = F)

@@ -5,7 +5,7 @@ source("R/theme_publication.R")
 library(foreign)
 # final data for analysis
 # 尽可能补充地级市交通运输客运量后的数据集
-infile <- "data/confirmed_pdm_pref_arrival_peak_day_airport_railway_station_update_pv.dbf"
+infile <- "output/pref_arrival_peak_day_airport_station_passengers.dbf"
 dat <- read.dbf(infile, as.is = TRUE)
 
 library(tidyverse)
@@ -150,7 +150,7 @@ dev.off()
 # multivariate regression to assess the associations between different travel 
 # mode for the arrival days of 340 prefectures in mainland China ---------------
 # geographic coordinates of administrative center for each prefectures
-latlng <- read.dbf("data/China_2010_Prefecture_Admin_Center_省直辖县级行政单位_aggregate.dbf")
+latlng <- read.dbf("data/pref_admin_center.dbf")
 latlng <- latlng %>%
   dplyr::select(GBPref, GeoName, lat, lng) %>%
   mutate(GBPref = as.character(GBPref))
@@ -305,7 +305,7 @@ vennDiagram(vc)
 arrival.dat5 <- arrival.dat %>% 
   dplyr::filter(PAviation > 0 & PRailway > 0 & PRoad > 0)
 # save this data for following regression analysis
-save(arrival.dat5, file = "output/115_prefectures_for_regression.rda")
+save(arrival.dat5, file = "output/115_prefs_for_qr.rda")
 
 cor.test(arrival.dat5$idx_arr, log(arrival.dat5$PAviation))
 cor.test(arrival.dat5$idx_arr, log(arrival.dat5$PRailway))
