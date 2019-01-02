@@ -147,10 +147,13 @@ print(p)
 dev.off()
 
 # calculate spatial stratified heterogeneity q statistic
+dat <- dat %>% 
+  mutate(intersect = paste(airport, station, sep = "_")) %>% 
+  mutate(intersect = as.factor(intersect))
 library(geodetector)
 # factor detector
-factor_detector("idx_arr", c("airport", "station"), dat)
-factor_detector("idx_pk", c("airport", "station"), dat)
+factor_detector("idx_arr", c("airport", "station", "intersect"), dat)
+factor_detector("idx_pk", c("airport", "station", "intersect"), dat)
 # interaction detector
 interaction_detector("idx_arr", c("airport", "station"), dat)
 interaction_detector("idx_pk", c("airport", "station"), dat)
@@ -166,6 +169,10 @@ ecological_detector("idx_pk", c("airport", "station"), dat)
 # mode for the arrival days of 340 prefectures in mainland China ---------------
 # geographic coordinates of administrative center for each prefectures
 latlng <- read.dbf("data/pref_admin_center.dbf")
+latlng1 <- read.dbf("data/China_2010_Prefecture_Admin_Center_省直辖县级行政单位_aggregate.dbf")
+latlng2 <- latlng1 %>% 
+  dplyr::select(GBPref, GBProv, ProvCH, PrefCH, FullName, GeoName, lat, lng, HuLine, HukunLine)
+write.dbf(latlng2, file = 'output/pref_admin_center_Hu_Hukun.dbf')
 latlng <- latlng %>%
   dplyr::select(GBPref, GeoName, lat, lng) %>%
   mutate(GBPref = as.character(GBPref))
