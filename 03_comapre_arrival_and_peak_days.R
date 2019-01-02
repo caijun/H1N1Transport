@@ -146,6 +146,21 @@ pdf(file = outfile, width = 5, height = 5)
 print(p)
 dev.off()
 
+# calculate spatial stratified heterogeneity q statistic
+library(geodetector)
+# factor detector
+factor_detector("idx_arr", c("airport", "station"), dat)
+factor_detector("idx_pk", c("airport", "station"), dat)
+# interaction detector
+interaction_detector("idx_arr", c("airport", "station"), dat)
+interaction_detector("idx_pk", c("airport", "station"), dat)
+# risk detector
+risk_detector("idx_arr", c("airport", "station"), dat)
+risk_detector("idx_pk", c("airport", "station"), dat)
+# ecological detector
+ecological_detector("idx_arr", c("airport", "station"), dat)
+ecological_detector("idx_pk", c("airport", "station"), dat)
+
 
 # multivariate regression to assess the associations between different travel 
 # mode for the arrival days of 340 prefectures in mainland China ---------------
