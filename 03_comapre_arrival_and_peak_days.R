@@ -146,14 +146,24 @@ pdf(file = outfile, width = 5, height = 5)
 print(p)
 dev.off()
 
+# geographic coordinates of administrative center for each prefectures
+# their locations relative to the Hu Line and the Hukun railway line
+latlng <- read.dbf("data/pref_admin_center_Hu_Hukun.dbf")
+latlng <- latlng %>%
+  dplyr::select(GBPref, GeoName, lat, lng, HuLine, HukunLine) %>%
+  mutate(GBPref = as.character(GBPref))
+
 # calculate spatial stratified heterogeneity q statistic
 dat <- dat %>% 
+  left_join(latlng, by = "GBPref") %>% 
   mutate(intersect = paste(airport, station, sep = "_")) %>% 
-  mutate(intersect = as.factor(intersect))
+  mutate(intersect = as.factor(intersect), 
+         HuLine = as.factor(HuLine), 
+         HukunLine = as.factor(HukunLine))
 library(geodetector)
 # factor detector
-factor_detector("idx_arr", c("airport", "station", "intersect"), dat)
-factor_detector("idx_pk", c("airport", "station", "intersect"), dat)
+factor_detector("idx_arr", c("airport", "station", "intersect", "HuLine", "HukunLine"), dat)
+factor_detector("idx_pk", c("airport", "station", "intersect", "HuLine", "HukunLine"), dat)
 # interaction detector
 interaction_detector("idx_arr", c("airport", "station"), dat)
 interaction_detector("idx_pk", c("airport", "station"), dat)
@@ -167,21 +177,10 @@ ecological_detector("idx_pk", c("airport", "station"), dat)
 
 # multivariate regression to assess the associations between different travel 
 # mode for the arrival days of 340 prefectures in mainland China ---------------
-# geographic coordinates of administrative center for each prefectures
-latlng <- read.dbf("data/pref_admin_center.dbf")
-latlng1 <- read.dbf("data/China_2010_Prefecture_Admin_Center_省直辖县级行政单位_aggregate.dbf")
-latlng2 <- latlng1 %>% 
-  dplyr::select(GBPref, GBProv, ProvCH, PrefCH, FullName, GeoName, lat, lng, HuLine, HukunLine)
-write.dbf(latlng2, file = 'output/pref_admin_center_Hu_Hukun.dbf')
-latlng <- latlng %>%
-  dplyr::select(GBPref, GeoName, lat, lng) %>%
-  mutate(GBPref = as.character(GBPref))
-
 # unit for PTotal, PRailway, PRoad, PBoat is # * 10^4 persons
 # unit for PAviation is # persons
 # 334 prefectures with available passenger volumes
 arrival.dat <- dat %>% 
-  left_join(latlng, by = "GBPref") %>%
   dplyr::select(GBPref, PrefCH, GBProv, ProvCH, lat, lng, 
                 idx_arr, PTotal, PAviation, PRailway, PRoad, PBoat) %>% 
   dplyr::mutate(PAviation = PAviation / 10000) %>% 
