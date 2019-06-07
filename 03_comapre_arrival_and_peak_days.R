@@ -107,11 +107,9 @@ travel_names <- c(
   `station` = "Railway station"
 )
 
-library(ggsci)
 library(ggsignif)
+library(ggsci)
 library(scales)
-mypal <- pal_npg("nrc", alpha = 0.8)(9)
-show_col(mypal)
 
 # annotate significance
 (annotation_df <- data.frame(var = c("idx_arr", "idx_arr", "idx_pk", "idx_pk"), 
@@ -132,11 +130,11 @@ p <- ggplot(vp.dat, aes(x = presence, y = val, color = presence)) +
               textsize = 3, vjust = -0.2, manual = TRUE, color = "grey60") + 
   labs(x = "", y = "Days since May 10, 2009") + 
   scale_color_npg(guide = FALSE, alpha = 0.8) +
-  # scale_fill_manual(values = mypal[1:2], guide = FALSE) + 
   scale_y_continuous(breaks = seq(0, 300, by = 50), limits = c(0, 300)) + 
   facet_grid(var ~ travel, labeller = labeller(var = as_labeller(var_names), 
                                                travel = as_labeller(travel_names))) + 
-  theme_publication(base_size = 12) +
+  theme_classic() + 
+  # theme_publication(base_size = 12) +
   theme(panel.grid.major = element_blank(), 
         strip.background = element_rect(colour = "gray95", fill = "gray95"))
 print(p)
@@ -145,6 +143,7 @@ outfile <- "figs/arrival_peak_day_violin_plot.pdf"
 pdf(file = outfile, width = 5, height = 5)
 print(p)
 dev.off()
+
 
 # geographic coordinates of administrative center for each prefectures
 # their locations relative to the Hu Line and the Hukun railway line

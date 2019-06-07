@@ -27,6 +27,7 @@ den <- density(arrival.dat5$idx_arr, from = min(arrival.dat5$idx_arr),
                to = max(arrival.dat5$idx_arr))
 den.df <- data.frame(x = den$x, y = den$y)
 
+library(ggplot2)
 library(latex2exp)
 library(ggsci)
 library(scales)
@@ -66,7 +67,7 @@ p1 <- ggplot(arrival.dat5, aes(x = idx_arr)) +
   labs(x = "Arrival days", y = "Density") + 
   theme_publication() + 
   theme(panel.grid.major = element_blank())
-print(p1)
+p1
 
 qs <- 1:3/4
 qr2 <- rq(idx_arr ~ lat + lng + log(PAviation) + log(PRailway) + log(PRoad), 
@@ -96,7 +97,13 @@ V1 <- sum(rho(fit1$resid, fit1$tau))
 qs <- 1:19/20
 qr3 <- rq(idx_arr ~ lat + lng + log(PAviation) + log(PRailway) + log(PRoad), 
           data = arrival.dat5, tau = qs)
-x <- summary(qr3, alpha = 0.05)
+(x <- summary(qr3, alpha = 0.05, se = "rank"))
+# Note that in my TTMBP2018, the lower bd or upper bd are abnormally 
+# low (-1.797693e+308) or high (1.797693e+308). 1.797693e+308 is the largest 
+# normalized floating-point number.
+# someone else had also encountered this issue
+# (http://r.789695.n4.nabble.com/Confidence-interval-on-quantile-regression-quantreg-td4725799.html)
+# However, in my TTMBP2013, the code produces correct intervals.
 
 taus <- sapply(x, function(x) x$tau)
 cf <- lapply(x, coef)
@@ -168,7 +175,7 @@ print(p4)
 p <- cowplot::plot_grid(p1, p2, p3, p4, nrow = 2, align = "v",
                         labels = c('(a)', '(b)', '(c)', '(d)'))
 
-outfile <- "figs/arrival_peak_day_qr_plot.pdf"
+outfile <- "figs/arrival_day_qr_plot.pdf"
 pdf(file = outfile, width = 10, height = 8)
 print(p)
 dev.off()
