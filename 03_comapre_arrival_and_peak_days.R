@@ -94,29 +94,53 @@ vp.dat <- dat %>%
   gather(var, val, idx_arr:idx_pk) %>% 
   gather(travel, presence, airport:station) %>% 
   mutate(var = factor(var, levels = c("idx_arr", "idx_pk"))) %>% 
-  mutate(presence = ifelse(presence == 0, "without", "with")) %>% 
-  mutate(presence = factor(presence, levels = c("with", "without")))
+  mutate(presence = ifelse(presence == 0, "无", "有")) %>% 
+  mutate(presence = factor(presence, levels = c("有", "无")))
+  # mutate(presence = ifelse(presence == 0, "without", "with")) %>% 
+  # mutate(presence = factor(presence, levels = c("with", "without")))
+
+# var_names <- c(
+#   `idx_arr` = "Arrival days", 
+#   `idx_pk` = "Peak days"
+# )
 
 var_names <- c(
-  `idx_arr` = "Arrival days", 
-  `idx_pk` = "Peak days"
+  `idx_arr` = "到达时间", 
+  `idx_pk` = "高峰时间"
 )
 
+# travel_names <- c(
+#   `airport` = "Airport",
+#   `station` = "Railway station"
+# )
+
 travel_names <- c(
-  `airport` = "Airport",
-  `station` = "Railway station"
+  `airport` = "机场",
+  `station` = "铁路客运站"
 )
 
 library(ggsignif)
 library(ggsci)
 library(scales)
+library(showtext)
+
+showtext_auto()
+font_add('SimSun', regular = '~/Library/Fonts/SimSun.ttf')
 
 # annotate significance
+# (annotation_df <- data.frame(var = c("idx_arr", "idx_arr", "idx_pk", "idx_pk"), 
+#                              travel = c("airport", "station", "airport", "station"), 
+#                              presence = rep("with", 4), 
+#                              start = rep("with", 4), 
+#                              end = rep("without", 4),
+#                              y = c(250, 250, 275, 275),
+#                              label = c("*", "***", "NS.", "NS.")))
+
 (annotation_df <- data.frame(var = c("idx_arr", "idx_arr", "idx_pk", "idx_pk"), 
                              travel = c("airport", "station", "airport", "station"), 
-                             presence = rep("with", 4), 
-                             start = rep("with", 4), 
-                             end = rep("without", 4),
+                             presence = rep("有", 4), 
+                             start = rep("有", 4), 
+                             end = rep("无", 4),
                              y = c(250, 250, 275, 275),
                              label = c("*", "***", "NS.", "NS.")))
 
@@ -127,8 +151,9 @@ p <- ggplot(vp.dat, aes(x = presence, y = val, color = presence)) +
                color = "darkred") +
   geom_signif(data = annotation_df,
               aes(xmin = start, xmax = end, annotations = label, y_position = y),
-              textsize = 3, vjust = -0.2, manual = TRUE, color = "grey60") + 
-  labs(x = "", y = "Days since May 10, 2009") + 
+              textsize = 4, vjust = -0.2, manual = TRUE, color = "grey60") + 
+  # labs(x = "", y = "Days since May 10, 2009") + 
+  labs(x = "", y = "自2009年5月10日的天数") + 
   scale_color_npg(guide = FALSE, alpha = 0.8) +
   scale_y_continuous(breaks = seq(0, 300, by = 50), limits = c(0, 300)) + 
   facet_grid(var ~ travel, labeller = labeller(var = as_labeller(var_names), 
@@ -136,8 +161,11 @@ p <- ggplot(vp.dat, aes(x = presence, y = val, color = presence)) +
   theme_classic() + 
   # theme_publication(base_size = 12) +
   theme(panel.grid.major = element_blank(), 
-        strip.background = element_rect(colour = "gray95", fill = "gray95"))
-print(p)
+        strip.background = element_rect(colour = "gray95", fill = "gray95"), 
+        axis.title = element_text(family = "SimSun"), 
+        strip.text = element_text(family = "SimSun"), 
+        axis.text.x = element_text(family = "SimSun"))
+p
 
 outfile <- "figs/arrival_peak_day_violin_plot.pdf"
 pdf(file = outfile, width = 5, height = 5)
@@ -188,48 +216,30 @@ arrival.dat <- dat %>%
 p <- ggplot(arrival.dat, aes(PTotal, idx_arr)) + 
   geom_point() + 
   scale_x_log10()
-print(p)
+p
 # R^2 = 0.3019
-m <- lm(idx_arr ~ log(PTotal), data = arrival.dat)
+m <- lm(idx_arr ~ log10(PTotal), data = arrival.dat)
 summary(m)
 
 # because PTotal is highly correlated with PRoad, omit PTotal in following 
 # analysis
 # correlations between variables
-cor.mtest <- function(mat, conf.level = 0.95) {
-  mat <- as.matrix(mat)
-  n <- ncol(mat)
-  p.mat <- lowCI.mat <- uppCI.mat <- matrix(NA, n, n)
-  diag(p.mat) <- 0
-  diag(lowCI.mat) <- diag(uppCI.mat) <- 1
-  for (i in 1:(n - 1)) {
-    for (j in (i + 1):n) {
-      tmp <- cor.test(mat[, i], mat[, j], conf.level = conf.level)
-      p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
-      lowCI.mat[i, j] <- lowCI.mat[j, i] <- tmp$conf.int[1]
-      uppCI.mat[i, j] <- uppCI.mat[j, i] <- tmp$conf.int[2]
-    }
-  }
-  return(list(p.mat, lowCI.mat, uppCI.mat))
-}
-
 cor.var <- arrival.dat %>% 
   dplyr::select(lat:PBoat)
-res <- cor.mtest(cor.var, 0.95)
 
-library(corrplot)
-M <- cor(cor.var)
+library(psych)
+ct <- corr.test(cor.var, adjust = "none")
+corr <- ct$r
+p.mat <- ct$p
+
+library(ggcorrplot2)
+p <- ggcorrplot.mixed(corr, upper = "ellipse", lower = "number", p.mat = p.mat, 
+                 insig = "label_sig", sig.lvl = c(0.05, 0.01, 0.001))
+
 outfile <- "figs/arrival_travel_corrplot.pdf"
-pdf(file = outfile, width = 5, height = 5)
-cex.old <- par("cex")
-par(mfrow = c(1, 1), cex = 0.8)
-
-corrplot(M, method = "number", type = "upper", tl.cex = 1/par("cex"),
-         cl.cex = 1/par("cex"), p.mat = res[[1]], sig.level = 0.05)
-
-par(cex = cex.old)
+pdf(file = outfile, width = 6, height = 6)
+p
 dev.off()
-
 
 # 135 prefectures with air passenger volume ------------------------------------
 arrival.dat1 <- arrival.dat %>% 
@@ -238,9 +248,9 @@ arrival.dat1 <- arrival.dat %>%
 p <- ggplot(arrival.dat1, aes(PAviation, idx_arr)) + 
   geom_point() + 
   scale_x_log10()
-print(p)
+p
 # R^2 = 0.3246
-m <- lm(idx_arr ~ log(PAviation), data = arrival.dat1)
+m <- lm(idx_arr ~ log10(PAviation), data = arrival.dat1)
 summary(m)
 
 # 255 prefectures with rail passenger volume -----------------------------------
@@ -250,9 +260,9 @@ arrival.dat2 <- arrival.dat %>%
 p <- ggplot(arrival.dat2, aes(PRailway, idx_arr)) + 
   geom_point() + 
   scale_x_log10()
-print(p)
+p
 # R^2 = 0.1434
-m <- lm(idx_arr ~ log(PRailway), data = arrival.dat2)
+m <- lm(idx_arr ~ log10(PRailway), data = arrival.dat2)
 summary(m)
 
 # 334 prefectures with road passenger volume -----------------------------------
@@ -264,9 +274,9 @@ arrival.dat3 <- arrival.dat %>%
 p <- ggplot(arrival.dat3, aes(PRoad, idx_arr)) + 
   geom_point() + 
   scale_x_log10()
-print(p)
+p
 # R^2 = 0.2804
-m <- lm(idx_arr ~ log(PRoad), data = arrival.dat3)
+m <- lm(idx_arr ~ log10(PRoad), data = arrival.dat3)
 summary(m)
 
 # 剔除那曲地区(5424)
@@ -277,9 +287,9 @@ p <- ggplot(arrival.dat3, aes(PRoad, idx_arr)) +
   geom_point() + 
   geom_hline(yintercept = 90, color = "red", linetype = "dashed") + 
   scale_x_log10()
-print(p)
+p
 # R^2 = 0.29
-m <- lm(idx_arr ~ log(PRoad), data = arrival.dat3)
+m <- lm(idx_arr ~ log10(PRoad), data = arrival.dat3)
 summary(m)
 
 # 151 prefectures with boat passenger volume -----------------------------------
@@ -289,12 +299,12 @@ arrival.dat4 <- arrival.dat %>%
 p <- ggplot(arrival.dat4, aes(PBoat, idx_arr)) + 
   geom_point() + 
   scale_x_log10()
-print(p)
+p
 # R^2 = 0.03221
 # although the association between arrival days and boat passenger volume was 
 # significant, boat passenger volume only explained < 0.04 of variance of 
 # arrival days
-m <- lm(idx_arr ~ log(PBoat), data = arrival.dat4)
+m <- lm(idx_arr ~ log10(PBoat), data = arrival.dat4)
 summary(m)
 
 # Venn Diagram of prefectures with different travel modes ----------------------
@@ -327,27 +337,27 @@ arrival.dat5 <- arrival.dat %>%
 # save this data for following regression analysis
 save(arrival.dat5, file = "output/115_prefs_for_qr.rda")
 
-cor.test(arrival.dat5$idx_arr, log(arrival.dat5$PAviation))
-cor.test(arrival.dat5$idx_arr, log(arrival.dat5$PRailway))
-cor.test(arrival.dat5$idx_arr, log(arrival.dat5$PRoad))
+cor.test(arrival.dat5$idx_arr, log10(arrival.dat5$PAviation))
+cor.test(arrival.dat5$idx_arr, log10(arrival.dat5$PRailway))
+cor.test(arrival.dat5$idx_arr, log10(arrival.dat5$PRoad))
 
 # 140 prefectures with rail and road passenger volumes -------------------------
 arrival.dat6 <- arrival.dat %>% 
   dplyr::filter(PAviation == 0 & PRailway > 0 & PRoad > 0)
 
-cor.test(arrival.dat6$idx_arr, log(arrival.dat6$PRailway))
-cor.test(arrival.dat6$idx_arr, log(arrival.dat6$PRoad))
+cor.test(arrival.dat6$idx_arr, log10(arrival.dat6$PRailway))
+cor.test(arrival.dat6$idx_arr, log10(arrival.dat6$PRoad))
 
 # 20 prefectures with air and road passenger volumes ---------------------------
 arrival.dat7 <- arrival.dat %>% 
   dplyr::filter(PAviation > 0 & PRailway == 0 & PRoad > 0)
 
 # insignificant relationship
-cor.test(arrival.dat7$idx_arr, log(arrival.dat7$PAviation))
-cor.test(arrival.dat7$idx_arr, log(arrival.dat7$PRoad))
+cor.test(arrival.dat7$idx_arr, log10(arrival.dat7$PAviation))
+cor.test(arrival.dat7$idx_arr, log10(arrival.dat7$PRoad))
 
 # 59 prefectures with only road passenger volume -------------------------------
 arrival.dat8 <- arrival.dat %>% 
   dplyr::filter(PAviation == 0 & PRailway == 0 & PRoad > 0)
 
-cor.test(arrival.dat8$idx_arr, log(arrival.dat8$PRoad))
+cor.test(arrival.dat8$idx_arr, log10(arrival.dat8$PRoad))

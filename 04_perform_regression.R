@@ -13,7 +13,7 @@ Fn(125)
 
 # quantile regression ----------------------------------------------------------
 library(quantreg)
-qr1 <- rq(idx_arr ~ lat + lng + log(PAviation) + log(PRailway) + log(PRoad), 
+qr1 <- rq(idx_arr ~ lat + lng + log10(PAviation) + log10(PRailway) + log10(PRoad), 
           data = arrival.dat5, tau = 0.5)
 summary(qr1)
 
@@ -31,6 +31,11 @@ library(ggplot2)
 library(latex2exp)
 library(ggsci)
 library(scales)
+library(showtext)
+
+showtext_auto()
+font_add('SimSun', regular = '~/Library/Fonts/SimSun.ttf')
+
 mypal <- pal_npg("nrc", alpha = 0.7)(9)
 show_col(mypal)
 
@@ -53,24 +58,29 @@ p1 <- ggplot(arrival.dat5, aes(x = idx_arr)) +
                color = "gray", 
                arrow = arrow(angle = 10, ends = "both", type = "closed", 
                              length = unit(0.1, "inches"))) + 
-  annotate("text", x = qs1, y = 0.019, label = "Phase I", color = "black", fontface = 2) + 
-  annotate("text", x = qs3, y = 0.019, label = "Phase II", color = "black", fontface = 2) + 
+  # annotate("text", x = qs1, y = 0.019, label = "Phase I", color = "black", fontface = 2) + 
+  annotate("text", x = qs1, y = 0.019, label = "阶段I", color = "black", fontface = 2, family = "SimSun") + 
+  # annotate("text", x = qs3, y = 0.019, label = "Phase II", color = "black", fontface = 2) + 
+  annotate("text", x = qs3, y = 0.019, label = "阶段II", color = "black", fontface = 2, family = "SimSun") + 
   annotate("text", x = qs1 + 14, y = 0.014, label = TeX("$\\tau = 0.25$", output = "character"), 
            color = "red", parse = TRUE) + 
   annotate("text", x = qs2 - 12, y = 0.012, label = TeX("$\\tau = 0.5$", output = "character"), 
            color = "green", parse = TRUE) + 
   annotate("text", x = qs3 + 14, y = 0.014, label = TeX("$\\tau = 0.75$", output = "character"), 
            color = "blue", parse = TRUE) + 
-  annotate("text", x = idx_arr.mean + 12, y = 0.012, label = "mean", color = "darkgreen") + 
+  # annotate("text", x = idx_arr.mean + 12, y = 0.012, label = "mean", color = "darkgreen") + 
+  annotate("text", x = idx_arr.mean + 12, y = 0.012, label = "均值", color = "darkgreen", family = "SimSun") + 
   scale_x_continuous(expand = c(0, 0), limits = c(0, 175), breaks = seq(0, 180, by = 20)) + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, 0.02)) + 
-  labs(x = "Arrival days", y = "Density") + 
+  # labs(x = "Arrival days", y = "Density") + 
+  labs(x = "到达时间", y = "密度") + 
   theme_publication() + 
-  theme(panel.grid.major = element_blank())
+  theme(panel.grid.major = element_blank(), 
+        axis.title = element_text(family = "SimSun"))
 p1
 
 qs <- 1:3/4
-qr2 <- rq(idx_arr ~ lat + lng + log(PAviation) + log(PRailway) + log(PRoad), 
+qr2 <- rq(idx_arr ~ lat + lng + log10(PAviation) + log10(PRailway) + log10(PRoad), 
           data = arrival.dat5, tau = qs)
 # default alpha level is 0.1
 # set alpha level to 0.05, 95% confidence interval
@@ -80,9 +90,9 @@ coef(qr2)
 # pseudo R squared
 # https://stackoverflow.com/questions/19861194/extract-r2-from-quantile-regression-summary
 fit0 <- rq(idx_arr ~ 1, 
-           data = arrival.dat5, tau = 0.25)
-fit1 <- rq(idx_arr ~ lat + lng + log(PAviation) + log(PRailway) + log(PRoad), 
-           data = arrival.dat5, tau = 0.25)
+           data = arrival.dat5, tau = 0.75)
+fit1 <- rq(idx_arr ~ lat + lng + log10(PAviation) + log10(PRailway) + log10(PRoad), 
+           data = arrival.dat5, tau = 0.75)
 
 rho <- function(u, tau = .5) {
   u * (tau - (u < 0))
@@ -95,21 +105,15 @@ V1 <- sum(rho(fit1$resid, fit1$tau))
 
 # quantile process regression plots
 qs <- 1:19/20
-qr3 <- rq(idx_arr ~ lat + lng + log(PAviation) + log(PRailway) + log(PRoad), 
+qr3 <- rq(idx_arr ~ lat + lng + log10(PAviation) + log10(PRailway) + log10(PRoad), 
           data = arrival.dat5, tau = qs)
 (x <- summary(qr3, alpha = 0.05, se = "rank"))
-# Note that in my TTMBP2018, the lower bd or upper bd are abnormally 
-# low (-1.797693e+308) or high (1.797693e+308). 1.797693e+308 is the largest 
-# normalized floating-point number.
-# someone else had also encountered this issue
-# (http://r.789695.n4.nabble.com/Confidence-interval-on-quantile-regression-quantreg-td4725799.html)
-# However, in my TTMBP2013, the code produces correct intervals.
 
 taus <- sapply(x, function(x) x$tau)
 cf <- lapply(x, coef)
 
 # quantile regression coefficients plot for log(PAviation)
-parm <- "log(PAviation)"
+parm <- "log10(PAviation)"
 cf1 <- lapply(cf, function(x) x[parm, , drop = FALSE])
 cf.df <- do.call("rbind", cf1)
 df <- data.frame(taus = taus, cf.df)
@@ -121,16 +125,19 @@ p2 <- ggplot(df, aes(taus, coefficients)) +
   geom_hline(yintercept = 0, color = "gray") + 
   scale_x_continuous(expand = c(0, 0), limits = c(0, 1), 
                      breaks = seq(0, 1, by = 0.1)) + 
-  scale_y_continuous(expand = c(0, 0), limits = c(-25, 10), 
-                     breaks = seq(-25, 10, by = 5)) +  
-  labs(x = "Quantile level", y = "Coefficients", 
-       title = "log(PAir)") + 
+  scale_y_continuous(expand = c(0, 0), limits = c(-60, 20),
+                     breaks = seq(-60, 20, by = 20)) +
+  # labs(x = "Quantile level", y = "Coefficients", 
+  #      title = "lg(PAir)") + 
+  labs(x = "分位数水平", y = "回归系数", 
+       title = "lg(PAir)") + 
   theme_publication() + 
-  theme(panel.grid.major = element_blank())
-print(p2)
+  theme(panel.grid.major = element_blank(), 
+        axis.title = element_text(family = "SimSun"))
+p2
 
 # quantile regression coefficients plot for log(PRailway)
-parm <- "log(PRailway)"
+parm <- "log10(PRailway)"
 cf1 <- lapply(cf, function(x) x[parm, , drop = FALSE])
 cf.df <- do.call("rbind", cf1)
 df <- data.frame(taus = taus, cf.df)
@@ -142,16 +149,19 @@ p3 <- ggplot(df, aes(taus, coefficients)) +
   geom_hline(yintercept = 0, color = "gray") + 
   scale_x_continuous(expand = c(0, 0), limits = c(0, 1), 
                      breaks = seq(0, 1, by = 0.1)) + 
-  scale_y_continuous(expand = c(0, 0), limits = c(-25, 10), 
-                     breaks = seq(-25, 10, by = 5)) + 
-  labs(x = "Quantile level", y = "Coefficients", 
-       title = "log(PRail)") + 
+  scale_y_continuous(expand = c(0, 0), limits = c(-60, 20),
+                     breaks = seq(-60, 20, by = 20)) +
+  # labs(x = "Quantile level", y = "Coefficients", 
+  #      title = "log(PRail)") + 
+  labs(x = "分位数水平", y = "回归系数", 
+       title = "lg(PRail)") + 
   theme_publication() + 
-  theme(panel.grid.major = element_blank())
+  theme(panel.grid.major = element_blank(), 
+        axis.title = element_text(family = "SimSun"))
 print(p3)
 
 # quantile regression coefficients plot for log(PRoad)
-parm <- "log(PRoad)"
+parm <- "log10(PRoad)"
 cf1 <- lapply(cf, function(x) x[parm, , drop = FALSE])
 cf.df <- do.call("rbind", cf1)
 df <- data.frame(taus = taus, cf.df)
@@ -163,12 +173,15 @@ p4 <- ggplot(df, aes(taus, coefficients)) +
   geom_hline(yintercept = 0, color = "gray") + 
   scale_x_continuous(expand = c(0, 0), limits = c(0, 1), 
                      breaks = seq(0, 1, by = 0.1)) + 
-  scale_y_continuous(expand = c(0, 0), limits = c(-25, 10), 
-                     breaks = seq(-25, 10, by = 5)) + 
-  labs(x = "Quantile level", y = "Coefficients", 
-       title = "log(PRoad)") + 
+  scale_y_continuous(expand = c(0, 0), limits = c(-60, 20),
+                     breaks = seq(-60, 20, by = 20)) +
+  # labs(x = "Quantile level", y = "Coefficients", 
+  #      title = "log(PRoad)") + 
+  labs(x = "分位数水平", y = "回归系数", 
+       title = "lg(PRoad)") + 
   theme_publication() + 
-  theme(panel.grid.major = element_blank())
+  theme(panel.grid.major = element_blank(), 
+        axis.title = element_text(family = "SimSun"))
 print(p4)
 
 # arrange four plots

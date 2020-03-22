@@ -2,6 +2,11 @@ rm(list = ls())
 
 source("R/theme_publication.R")
 
+library(showtext)
+
+showtext_auto()
+font_add('SimSun', regular = '~/Library/Fonts/SimSun.ttf')
+
 library(tidyverse)
 library(foreign)
 pdm <- read.dbf('data/confirmed_pdm.dbf', as.is = TRUE)
@@ -25,27 +30,37 @@ pdm.early.dec$counts[1:9] <- NA
 
 p1 <- ggplot(pdm.dec, aes(dates, counts)) + 
   geom_line() + 
+  # scale_x_date(expand = c(0, 0), 
+  #              limits = c(as.Date("2009-05-01"), as.Date("2010-05-01")), 
+  #              breaks = "1 month", date_labels = "%Y-%b") + 
   scale_x_date(expand = c(0, 0), 
                limits = c(as.Date("2009-05-01"), as.Date("2010-05-01")), 
-               breaks = "1 month", date_labels = "%Y-%b") + 
-  labs(x = "", y = "Number of cases") + 
+               breaks = "1 month", date_labels = "%Y-%m") + 
+  # labs(x = "", y = "Number of cases") + 
+  labs(x = "", y = "确诊病例数") + 
   theme_publication(base_size = 12) + 
   theme(axis.text.x = element_text(angle = 30, hjust = 1), 
         plot.margin = unit(c(0.5, 0.5, 0, 0.5), "cm"), 
-        panel.grid.major = element_blank())
-print(p1)
+        panel.grid.major = element_blank(), 
+        axis.title = element_text(family = "SimSun"))
+p1
 
 p2 <- ggplot(pdm.early.dec, aes(dates, counts)) + 
   geom_line() + 
+  # scale_x_date(expand = c(0, 0), 
+  #              limits = c(as.Date("2009-05-01"), as.Date("2009-09-05")), 
+  #              breaks = "1 month", date_labels = "%Y-%b") + 
   scale_x_date(expand = c(0, 0), 
                limits = c(as.Date("2009-05-01"), as.Date("2009-09-05")), 
-               breaks = "1 month", date_labels = "%Y-%b") + 
-  labs(x = "", y = "Number of cases") + 
+               breaks = "1 month", date_labels = "%Y-%m") + 
+  # labs(x = "", y = "Number of cases") + 
+  labs(x = "", y = "确诊病例数") + 
   theme_publication(base_size = 12) + 
-  theme(axis.text.x = element_text(angle = 30, hjust = 1), 
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5), 
         plot.margin = unit(c(0.5, 0.5, 0, 0.5), "cm"), 
-        panel.grid.major = element_blank())
-print(p2)
+        panel.grid.major = element_blank(), 
+        axis.title = element_text(family = "SimSun"))
+p2
 
 p <- cowplot::plot_grid(p1, p2, nrow = 2, align = "v")
 
@@ -85,24 +100,33 @@ p <- ggplot(pdm.beijing.dec, aes(dates, counts)) +
                color = "green", 
                arrow = arrow(angle = 10, ends = "both", type = "closed", 
                              length = unit(0.05, "inches"))) + 
-  annotate("text", x = as.Date("2009-06-22"), y = 190, label = "Arrival days", 
-           color = "green") + 
+  # annotate("text", x = as.Date("2009-06-22"), y = 190, label = "Arrival days", 
+  #          color = "green") + 
+  annotate("text", x = as.Date("2009-06-20"), y = 190, label = "到达时间", 
+           color = "green", family = "SimSun") + 
   geom_segment(aes(x = as.Date("2009-05-10"), y = pk.counts, xend = pk.date, yend = pk.counts), 
                color = "red", 
                arrow = arrow(angle = 10, ends = "both", type = "closed", 
                              length = unit(0.05, "inches"))) + 
-  annotate("text", x = as.Date("2009-08-01"), y = 230, label = "Peak days", 
-           color = "red") + 
+  # annotate("text", x = as.Date("2009-08-01"), y = 230, label = "Peak days", 
+  #          color = "red") + 
+  annotate("text", x = as.Date("2009-08-01"), y = 230, label = "高峰时间", 
+           color = "red", family = "SimSun") + 
+  # scale_x_date(expand = c(0, 0), 
+  #              limits = c(as.Date("2009-05-01"), as.Date("2010-05-01")), 
+  #              breaks = "1 month", date_labels = "%Y-%b") + 
   scale_x_date(expand = c(0, 0), 
                limits = c(as.Date("2009-05-01"), as.Date("2010-05-01")), 
-               breaks = "1 month", date_labels = "%Y-%b") + 
-  labs(x = "", y = "Number of cases") + 
+               breaks = "1 month", date_labels = "%Y-%m") + 
+  # labs(x = "", y = "Number of cases") + 
+  labs(x = "", y = "确诊病例数") + 
   theme_publication(base_size = 12) + 
   theme(axis.text.x = element_text(angle = 30, hjust = 1), 
-        panel.grid.major = element_blank())
-print(p)
+        panel.grid.major = element_blank(), 
+        axis.title = element_text(family = "SimSun"))
+p
 
-outfile <- "figs/arrival_peak_day_illustration.pdf"
+outfile <- "figs/illustrate_arrival_peak_day.pdf"
 pdf(file = outfile, width = 8, height = 6)
 print(p)
 dev.off()
